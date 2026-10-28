@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Technical Guide · Subject night day table</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="bar">
+      <a class="brand" href="index.html">Subject night day table</a>
+      <nav>
+        <a href="index.html">Overview</a>
+        <a href="user-guide.html">User Guide</a>
+        <a href="technical-guide.html" class="active">Technical Guide</a>
+        <a href="troubleshooting.html">Troubleshooting</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>Technical Guide</h1>
+    <p class="lede">The steps Subject night day table runs, the packages they come from, its run-form overrides, and how to recompile and test it.</p>
+
+    <h2>Steps</h2>
+    <p>In the order they run. Each step is a task from one of the packages below; none are in task groups.</p>
+    <table>
+      <thead><tr><th>#</th><th>Step</th><th>Task</th><th>What it does</th></tr></thead>
+      <tbody><tr><td>1</td><td><strong>Set Workflow Details</strong></td><td><code>set_workflow_details</code></td><td>Name and description shown on the dashboard.</td></tr><tr><td>2</td><td><strong>Connect to EarthRanger</strong></td><td><code>set_er_connection</code></td><td>The EarthRanger site to read from.</td></tr><tr><td>3</td><td><strong>Set Time Range</strong></td><td><code>set_time_range</code></td><td>The period to analyse.</td></tr><tr><td>4</td><td><strong>Set Groupers</strong></td><td><code>set_groupers</code></td><td>How the table is split: per subject, per time period or per spatial region. Leave empty for one view.</td></tr><tr><td>5</td><td><strong>Subject Group</strong></td><td><code>get_subjectgroup_observations</code></td><td>Fetches the location fixes of the subject group picked from the drop-down, for the time range.</td></tr><tr><td>6</td><td><strong>Process Relocations</strong></td><td><code>process_relocations</code></td><td>Cleans the fixes and drops known bad coordinates (0,0 / 1,1 / 180,90).</td></tr><tr><td>7</td><td><strong>Classify Is Night</strong></td><td><code>classify_is_night</code></td><td>Flags each fix as night when the sun is below the horizon at its location and time.</td></tr><tr><td>8</td><td><strong>Persist Relocations</strong></td><td><code>persist_df</code></td><td>Saves the classified fixes as <code>relocations.geoparquet</code>.</td></tr><tr><td>9</td><td><strong>Trajectory Segment Filter</strong></td><td><code>relocations_to_trajectory</code></td><td>Joins the fixes into track segments, dropping segments outside the Trajectory Segment Filter limits.</td></tr><tr><td>10</td><td><strong>Persist Trajectories</strong></td><td><code>persist_df</code></td><td>Saves the track segments as <code>trajectories.geoparquet</code>.</td></tr><tr><td>11</td><td><strong>Map Trajectory Columns</strong></td><td><code>map_columns</code></td><td>Renames the subject and day/night columns (e.g. <code>subject_name</code>, <code>is_night</code>) and drops unused patrol columns.</td></tr><tr><td>12</td><td><strong>Sort Night Day Values</strong></td><td><code>sort_values</code></td><td>Orders the segments by their day/night flag.</td></tr><tr><td>13</td><td><strong>Extract Date from Segment Start</strong></td><td><code>decompose_datetime</code></td><td>Adds a <code>segment_start_date</code> column: the date each segment starts on. Nothing downstream uses it; the ratio dates each night itself.</td></tr><tr><td>14</td><td><strong>Split Groups</strong></td><td><code>split_groups</code></td><td>One table of segments per group from Set Groupers.</td></tr><tr><td>15</td><td><strong>Summarize Night Day Df</strong></td><td><code>summarize_night_day_ratio</code></td><td>Computes the night/day ratio for each <code>subject_name</code> on each solar day, returned as <code>solar_date</code> and <code>night_day_ratio</code> (2 decimal places). See <a href="#ratio">below</a>.</td></tr><tr><td>16</td><td><strong>Exclude null values from night_day_ratio</strong></td><td><code>filter_rows</code></td><td>Keeps rows where <code>night_day_ratio</code> &gt; 0. This drops the NaN rows for days that couldn't be scored, and any day with no night movement.</td></tr><tr><td>17</td><td><strong>Persist Night Day Df</strong></td><td><code>persist_df</code></td><td>Saves each group's filtered nightly ratios as a CSV file.</td></tr><tr><td>18</td><td><strong>Map Night Day DF</strong></td><td><code>map_columns</code></td><td>Renames <code>solar_date</code>, <code>subject_name</code> and <code>night_day_ratio</code> to Date, Subject Name and Night Day Ratio for the table.</td></tr><tr><td>19</td><td><strong>Draw Night Day Table</strong></td><td><code>draw_table</code></td><td>Draws the renamed columns as a table, one row per subject per night.</td></tr><tr><td>20</td><td><strong>Persist Night Day Table as HTML</strong></td><td><code>persist_text</code></td><td>Saves each table as an HTML file.</td></tr><tr><td>21</td><td><strong>Create Table Widget Single View</strong></td><td><code>create_table_widget_single_view</code></td><td>Wraps each table as a <strong>Night Day Ratio Table</strong> widget.</td></tr><tr><td>22</td><td><strong>Merge Widget Views</strong></td><td><code>merge_widget_views</code></td><td>Combines the per-group tables into one widget, so the dashboard filter switches between them.</td></tr><tr><td>23</td><td><strong>Gather Dashboard</strong></td><td><code>gather_dashboard</code></td><td>Collects the table widget into the dashboard. <code>layout.json</code> gives it the full dashboard width.</td></tr></tbody>
+    </table>
+
+    <h2>Task packages</h2>
+    <table>
+      <thead><tr><th>Package</th><th>Version</th><th>Channel</th></tr></thead>
+      <tbody><tr><td><code>ecoscope-platform</code></td><td>==2.25.3</td><td>https://repo.prefix.dev/ecoscope-workflows/</td></tr><tr><td><code>ecoscope-workflows-ext-custom</code></td><td>==0.1.5</td><td>https://repo.prefix.dev/ecoscope-workflows-custom/</td></tr><tr><td><code>ecoscope-workflows-ext-ste</code></td><td>0.0.24.*</td><td>https://repo.prefix.dev/ecoscope-workflows-custom/</td></tr><tr><td><code>pydeck</code></td><td>==0.9.2</td><td>conda-forge</td></tr></tbody>
+    </table>
+
+    <h2>Run form</h2>
+    <p><code>spec.yaml</code> shapes the form in these ways:</p>
+    <ul>
+      <li><code>rjsf-overrides</code> turns <strong>Subject Group Name</strong> into a drop-down: the <code>EarthRangerEnumResolver</code> transform fills it with the subject groups of the data source picked under <strong>Connect to EarthRanger</strong> (<code>depends_on: properties.er_connection.properties.data_source.properties.name</code>).</li>
+      <li><code>rjsf-overrides</code> <code>$defs</code> limits the <strong>Category</strong> grouper to <em>Subject Name</em> (<code>ValueGrouper.properties.index_name.oneOf</code>), the only subject column the views are split on.</li>
+      <li>The steps are not in task groups, so each form override is keyed by its step id (e.g. <code>subjectgroup_observations.properties.subject_group_name</code>).</li>
+      <li>The <strong>Spatial</strong> grouper's <em>Spatial Regions</em> is still a text field. To make it a drop-down of the site's spatial feature groups, add an <code>EarthRangerEnumResolver</code> transform with <code>type: spatial_feature_group</code> on <code>groupers.properties.groupers</code>.</li>
+      <li><strong>Open settings.</strong> Set Groupers and the Trajectory Segment Filter have no <code>partial</code> values, so they're on the form for each run. Without a <code>ui:order</code>, sections appear in the order of the steps.</li>
+    </ul>
+
+    <h2 id="ratio">How the night/day ratio is calculated</h2>
+    <p><code>summarize_night_day_ratio</code> (ecoscope-workflows-ext-custom) splits each subject's segments into local solar days and scores each one on its own. It compares <em>speed</em>, not distance, so long winter nights or short summer nights don't bias the result:</p>
+    <ul>
+      <li>A solar day runs from local noon to local noon, so it holds one whole night. Local time comes from the segment's longitude (15&deg; per hour). The day's <code>solar_date</code> is the date of the local midnight in it, so the night of 3&ndash;4 May is <strong>4 May</strong>.</li>
+      <li><strong>Night</strong> is when the sun is more than 6&deg; below the horizon (civil twilight) at the solar day's position. Each segment's distance and observed hours are split between night and day by the share of its time that falls in that window.</li>
+      <li>For each solar day: night speed = night distance &divide; observed night hours, day speed = day distance &divide; observed day hours, and <strong>ratio = night speed &divide; day speed</strong>. <strong>1</strong> is balanced, <strong>above 1</strong> faster at night, <strong>below 1</strong> faster by day.</li>
+      <li>A solar day gets no ratio (NaN) unless it has more than <strong>1 hour</strong> of observed data in both daylight and darkness, or when there was no daytime movement. The same happens on a day with no night at all, such as polar summer. Segments longer than <strong>6 hours</strong> are dropped rather than split, because a long gap-bridging segment says nothing about speed within it. <strong>Exclude null values from night_day_ratio</strong> then removes these rows, plus days with a ratio of 0 (no night movement).</li>
+    </ul>
+    <p><strong>Why not <code>summarize_df</code>?</strong> Its <code>night_day_ratio</code> aggregator runs ecoscope's <code>get_nightday_ratio</code> on whatever rows it is given, so a per-date table would mean grouping segments by their UTC start date (<code>segment_start_date</code>). <code>get_nightday_ratio</code> already works in noon-to-noon solar days. Slicing its input at UTC midnight first cuts every night near longitude 0 in half, and each half can then fail the 1-hour coverage check, so nights go missing. <code>summarize_night_day_ratio</code> reuses ecoscope's noon-to-noon split and night-fraction helpers, but returns one row per solar day. For a single solar day, <code>get_nightday_ratio</code>'s weighted share comes to the same night speed &divide; day speed. It also uses astropy's bundled IERS tables rather than downloading them, and it handles dusk or dawn falling in a leap second.</p>
+    <p>Two caveats from ecoscope: the ratio depends on fix rate, so don't compare collars with different duty cycles (coarser fixes pull the ratio towards 1), and it skews if a track crosses the &minus;180/180&deg; meridian. The <code>is_night</code> flag from <strong>Classify Is Night</strong> is kept in the saved data but isn't used by the ratio, which works out darkness itself.</p>
+
+    <h2>Recompiling</h2>
+    <p><code>spec.yaml</code> is the source; <code>ecoscope-workflows-subject-night-day-table-workflow/</code> is generated from it by wt-compiler.</p>
+    <pre><code>./dev/recompile.sh --update   # keeps the lock file and bumps VERSION.yaml
+./dev/recompile.sh --install  # a new lock file, and the packages installed</code></pre>
+
+    <h2>Testing</h2>
+    <p>Each case in <code>test-cases.yaml</code> runs the workflow with its settings:</p>
+    <pre><code>pixi run --manifest-path pixi.toml -e default bash dev/pytest-cli.sh subject_night_day_table --all</code></pre>
+  </main>
+
+  <footer class="site-footer">
+    <p>Subject night day table &middot; Wildlife Dynamics</p>
+  </footer>
+</body>
+</html>

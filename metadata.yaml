@@ -1,21 +1,7 @@
-name:  # Title Case, e.g. "My Ecoscope Workflow Template"
-
-# at least one author is required
+name: Subject night day table
 author:
-  - name: ""
-    organization: ""
-    email: ""
-
-description: # A short description
-
-# todo: add example
-theory: "" # optional
-
-# todo: add example
-output_comment: "" # optional
-
-# optional
-# example
-# citation: 
-#   - Wu, Y. et al. (2025). "Monitoring elephant spatial patterns with Ecoscope workflows."
-citation: [] 
+- name: Tevin Temu
+  organization: Wildlife Dynamics
+  email: tevin@wildlifedynamics.com
+description: ''
+citation: []

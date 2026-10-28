@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Subject night day table</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 860px; margin: 40px auto; padding: 0 24px; color: #1a1a1a; line-height: 1.6; }
+    h1 { font-size: 2em; border-bottom: 2px solid #2d6a4f; padding-bottom: 10px; color: #2d6a4f; }
+    h2 { font-size: 1.4em; color: #2d6a4f; margin-top: 2em; border-bottom: 1px solid #b7e4c7; padding-bottom: 4px; }
+    h3 { font-size: 1.1em; color: #40916c; margin-top: 1.5em; }
+    h4 { font-size: 1em; color: #52b788; }
+    img { max-width: 100%; border: 1px solid #d8e8d8; border-radius: 6px; margin: 16px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    pre { background: #f4f4f4; padding: 12px 16px; border-radius: 6px; font-size: 0.9em; overflow-x: auto; border-left: 4px solid #52b788; }
+    code { background: #f0f7f0; padding: 2px 5px; border-radius: 3px; font-size: 0.9em; }
+    pre code { background: none; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 0.95em; }
+    th { background: #2d6a4f; color: white; padding: 10px 14px; text-align: left; }
+    td { padding: 9px 14px; border-bottom: 1px solid #d8e8d8; }
+    tr:nth-child(even) td { background: #f0f7f0; }
+    hr { border: none; border-top: 1px solid #d8e8d8; margin: 2em 0; }
+    blockquote { border-left: 4px solid #52b788; margin: 1em 0; padding: 8px 16px; background: #f0f7f0; color: #444; border-radius: 0 4px 4px 0; }
+  </style>
+
+</head>
+<body>
+
+<h1 id="subject-night-day-table">Subject night day table</h1>
+<p>Tabulates, night by night, how much faster each subject in an EarthRanger subject group moves at night than by day. The night/day ratio compares movement speed in darkness with speed in daylight: 1 is balanced, above 1 the subject moves faster at night, below 1 it moves faster by day.</p>
+<p>Full documentation: <a href="docs/index.html">docs/index.html</a> (User Guide, Technical Guide and Troubleshooting).</p>
+<h2 id="what-it-does">What it does</h2>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Set Workflow Details</strong></td>
+<td>Name and description shown on the dashboard.</td>
+</tr>
+<tr>
+<td><strong>Connect to EarthRanger</strong></td>
+<td>The EarthRanger site to read from.</td>
+</tr>
+<tr>
+<td><strong>Set Time Range</strong></td>
+<td>The period to analyse.</td>
+</tr>
+<tr>
+<td><strong>Set Groupers</strong></td>
+<td>How the table is split: per subject, per time period or per spatial region. Leave empty for one view.</td>
+</tr>
+<tr>
+<td><strong>Subject Group</strong></td>
+<td>Fetches the location fixes of the subject group picked from the drop-down, for the time range.</td>
+</tr>
+<tr>
+<td><strong>Process Relocations</strong></td>
+<td>Cleans the fixes and drops known bad coordinates (0,0 / 1,1 / 180,90).</td>
+</tr>
+<tr>
+<td><strong>Classify Is Night</strong></td>
+<td>Flags each fix as night when the sun is below the horizon at its location and time.</td>
+</tr>
+<tr>
+<td><strong>Persist Relocations</strong></td>
+<td>Saves the classified fixes as <code>relocations.geoparquet</code>.</td>
+</tr>
+<tr>
+<td><strong>Trajectory Segment Filter</strong></td>
+<td>Joins the fixes into track segments, dropping segments outside the Trajectory Segment Filter limits.</td>
+</tr>
+<tr>
+<td><strong>Persist Trajectories</strong></td>
+<td>Saves the track segments as <code>trajectories.geoparquet</code>.</td>
+</tr>
+<tr>
+<td><strong>Map Trajectory Columns</strong></td>
+<td>Renames the subject and day/night columns (e.g. <code>subject_name</code>, <code>is_night</code>) and drops unused patrol columns.</td>
+</tr>
+<tr>
+<td><strong>Sort Night Day Values</strong></td>
+<td>Orders the segments by their day/night flag.</td>
+</tr>
+<tr>
+<td><strong>Extract Date from Segment Start</strong></td>
+<td>Adds a <code>segment_start_date</code> column: the date each segment starts on (kept in the data; the ratio dates each night itself).</td>
+</tr>
+<tr>
+<td><strong>Split Groups</strong></td>
+<td>One table of segments per group from Set Groupers.</td>
+</tr>
+<tr>
+<td><strong>Summarize Night Day Df</strong></td>
+<td>Computes the night/day ratio for each subject on each solar day (local noon to local noon, so one whole night), dated by that night's local midnight (2 decimal places).</td>
+</tr>
+<tr>
+<td><strong>Exclude null values from night_day_ratio</strong></td>
+<td>Keeps only rows with a ratio above 0, dropping solar days that couldn't be scored.</td>
+</tr>
+<tr>
+<td><strong>Persist Night Day Df</strong></td>
+<td>Saves each group's nightly ratios as a CSV file.</td>
+</tr>
+<tr>
+<td><strong>Map Night Day DF</strong></td>
+<td>Renames the columns to Date, Subject Name and Night Day Ratio for the table.</td>
+</tr>
+<tr>
+<td><strong>Draw Night Day Table</strong></td>
+<td>Draws the nightly ratios as a table, one row per subject per night.</td>
+</tr>
+<tr>
+<td><strong>Persist Night Day Table as HTML</strong></td>
+<td>Saves each table as an HTML file.</td>
+</tr>
+<tr>
+<td><strong>Create Table Widget Single View</strong></td>
+<td>Wraps each table as a <strong>Night Day Ratio Table</strong> widget.</td>
+</tr>
+<tr>
+<td><strong>Merge Widget Views</strong></td>
+<td>Combines the per-group tables into one widget, so the dashboard filter switches between them.</td>
+</tr>
+<tr>
+<td><strong>Gather Dashboard</strong></td>
+<td>Collects the table widget into the dashboard.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="what-it-produces">What it produces</h2>
+<table>
+<thead>
+<tr>
+<th>Output</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>relocations.geoparquet</code></td>
+<td>The cleaned location fixes, each with an <code>is_night</code> flag.</td>
+</tr>
+<tr>
+<td><code>trajectories.geoparquet</code></td>
+<td>The track segments built from those fixes.</td>
+</tr>
+<tr>
+<td>One CSV per group</td>
+<td>The night/day ratio for each subject on each solar day, with columns <code>subject_name</code>, <code>solar_date</code> and <code>night_day_ratio</code>. Days that couldn't be scored are left out.</td>
+</tr>
+<tr>
+<td>One HTML table per group</td>
+<td>As shown on the dashboard.</td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td>A <strong>Night Day Ratio Table</strong>; with groupers set, the dashboard filter switches between groups.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>Access to an <strong>EarthRanger</strong> data source, set up as a connection</li>
+</ul>
+<hr />
+<h2 id="1-load-the-workflow">1. Load the Workflow</h2>
+<p>In the workflow runner, add a new template using this repository's URL. Once added, select
+<strong>Subject night day table</strong> from the available templates list to load it.</p>
+<hr />
+<h2 id="2-configure-the-workflow">2. Configure the Workflow</h2>
+<p>You'll be prompted to fill in the following parameters before running. Fields marked <em>Advanced</em> are collapsed
+and can be left at their defaults.</p>
+<h3 id="set-workflow-details">Set Workflow Details</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Workflow Name <em>(required)</em></td>
+<td>A name for this run.</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Workflow Description</td>
+<td>Optional notes about this run.</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="connect-to-earthranger">Connect to EarthRanger</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data source <em>(required)</em></td>
+<td>Select one of your configured EarthRanger data sources. Choose it first: the Subject Group drop-down lists this data source's groups.</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="set-time-range">Set Time Range</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Since <em>(required)</em></td>
+<td>The start of the period to analyse.</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Until <em>(required)</em></td>
+<td>The end of the period to analyse.</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Timezone</td>
+<td>Timezone the times are given in.</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="set-groupers">Set Groupers</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Group by</td>
+<td>Optional. Add a grouper to get one table per group: <strong>Category</strong> (only <em>Subject Name</em>, one view per subject), <strong>Temporal</strong> (e.g. one per month) or <strong>Spatial</strong> (one per spatial region). Leave empty for a single table with a row for every subject and night.</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="subject-group">Subject Group</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Subject Group Name <em>(required)</em></td>
+<td>The EarthRanger subject group to analyse, picked from a drop-down of the chosen data source's subject groups. ⚠️ A group with mixed subtypes could give unexpected results.</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="trajectory-segment-filter">Trajectory Segment Filter</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Trajectory Segment Filter</td>
+<td>Limits on segment length, duration and speed; segments outside them are dropped. Advanced.</td>
+<td>length 0.001 m – 100 km, time 1 s – 48 h, speed 0.01 – 500 km/h</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-results">3. Results</h2>
+<p>The workflow writes its files to the results folder the runner gives it (<code>ECOSCOPE_WORKFLOWS_RESULTS</code>) and
+shows its dashboard when it finishes. A ratio of 1 means equal speed by night and day, above 1 faster at night, below 1 faster by day. Each row is one night: a solar day runs from local noon to local noon and is dated by the local midnight in it, so the night of 3–4 May is listed as 4 May. Days without more than 1 hour of observed data in both daylight and darkness, or with no movement by night or by day, are left out.</p>
+<hr />
+<h2 id="developing">Developing</h2>
+<p>The run form is set in <code>spec.yaml</code>:</p>
+<ul>
+<li><code>rjsf-overrides</code> turns <strong>Subject Group Name</strong> into a drop-down: the <code>EarthRangerEnumResolver</code> transform fills it with the subject groups of the data source picked under <strong>Connect to EarthRanger</strong> (<code>depends_on: properties.er_connection.properties.data_source.properties.name</code>).</li>
+<li><code>rjsf-overrides</code> <code>$defs</code> limits the <strong>Category</strong> grouper to <em>Subject Name</em> (<code>ValueGrouper.properties.index_name.oneOf</code>), the only subject column the views are split on.</li>
+<li>The steps are not in task groups, so each form override is keyed by its step id (e.g. <code>subjectgroup_observations.properties.subject_group_name</code>).</li>
+<li><strong>Summarize Night Day Df</strong> uses <code>summarize_night_day_ratio</code> from <code>ecoscope-workflows-ext-custom</code> (0.1.5), which scores each solar day separately (night speed ÷ day speed) instead of slicing segments by UTC date, which would cut nights near longitude 0 in half. <strong>Exclude null values from night_day_ratio</strong> uses <code>filter_rows</code> from <code>ecoscope-workflows-ext-ste</code> (0.0.24) to drop the days it returns no ratio for.</li>
+<li>The <strong>Spatial</strong> grouper's <em>Spatial Regions</em> is still a text field. To make it a drop-down of the site's spatial feature groups, add an <code>EarthRangerEnumResolver</code> transform with <code>type: spatial_feature_group</code> on <code>groupers.properties.groupers</code>.</li>
+</ul>
+<pre><code class="language-bash"># recompile spec.yaml (first time: --install; after that: --update, which bumps VERSION.yaml)
+./dev/recompile.sh --update
+
+# run the test cases in test-cases.yaml
+pixi run --manifest-path pixi.toml -e default bash dev/pytest-cli.sh subject_night_day_table --all
+</code></pre>
+<p>Documentation: <a href="docs/index.html">docs/index.html</a>.</p>
+
+</body>
+</html>

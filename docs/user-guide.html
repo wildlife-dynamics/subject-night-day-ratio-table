@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Guide · Subject night day table</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="bar">
+      <a class="brand" href="index.html">Subject night day table</a>
+      <nav>
+        <a href="index.html">Overview</a>
+        <a href="user-guide.html" class="active">User Guide</a>
+        <a href="technical-guide.html">Technical Guide</a>
+        <a href="troubleshooting.html">Troubleshooting</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>User Guide</h1>
+    <p class="lede">How to load Subject night day table, connect its data source and fill in its settings.</p>
+
+    <h2>1. Load the workflow</h2>
+    <p>In the workflow runner, add a new template using this repository's URL, then select <strong>Subject night day table</strong> from the templates list.</p>
+
+    <h2>2. Data sources</h2>
+    <ul><li>Access to an <strong>EarthRanger</strong> data source, set up as a connection</li></ul>
+
+    <h2>3. Settings</h2>
+    <p>The run form asks for these. Fields with a default can be left as they are; fields marked <em>Advanced</em> are collapsed.</p>
+    <h3 id="set-workflow-details">Set Workflow Details</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
+      <tbody><tr><td>Workflow Name <em>(required)</em></td><td>A name for this run.</td><td>—</td></tr><tr><td>Workflow Description</td><td>Optional notes about this run.</td><td>—</td></tr></tbody>
+    </table>
+    <h3 id="connect-to-earthranger">Connect to EarthRanger</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
+      <tbody><tr><td>Data source <em>(required)</em></td><td>Select one of your configured EarthRanger data sources. Choose it first: the Subject Group drop-down lists this data source's groups.</td><td>—</td></tr></tbody>
+    </table>
+    <h3 id="set-time-range">Set Time Range</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
+      <tbody><tr><td>Since <em>(required)</em></td><td>The start of the period to analyse.</td><td>—</td></tr><tr><td>Until <em>(required)</em></td><td>The end of the period to analyse.</td><td>—</td></tr><tr><td>Timezone</td><td>Timezone the times are given in.</td><td>—</td></tr></tbody>
+    </table>
+    <h3 id="set-groupers">Set Groupers</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
+      <tbody><tr><td>Group by</td><td>Optional. Add a grouper to get one table per group: <strong>Category</strong> (only <em>Subject Name</em>, one view per subject), <strong>Temporal</strong> (e.g. one per month) or <strong>Spatial</strong> (one per spatial region). Leave empty for a single table with a row for every subject and night.</td><td>—</td></tr></tbody>
+    </table>
+    <h3 id="subject-group">Subject Group</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
+      <tbody><tr><td>Subject Group Name <em>(required)</em></td><td>The EarthRanger subject group to analyse, picked from a drop-down of the chosen data source's subject groups. ⚠️ A group with mixed subtypes could give unexpected results.</td><td>—</td></tr></tbody>
+    </table>
+    <h3 id="trajectory-segment-filter">Trajectory Segment Filter</h3>
+    <table>
+      <thead><tr><th>Field</th><th>Description</th><th>Default</th></tr></thead>
+      <tbody><tr><td>Trajectory Segment Filter</td><td>Limits on segment length, duration and speed; segments outside them are dropped. Advanced.</td><td>length 0.001 m – 100 km, time 1 s – 48 h, speed 0.01 – 500 km/h</td></tr></tbody>
+    </table>
+
+    <h2>4. Run it and find the results</h2>
+    <p>The workflow writes its files to the results folder the runner gives it (<code>ECOSCOPE_WORKFLOWS_RESULTS</code>), and shows its dashboard when it finishes.</p>
+    <table>
+      <thead><tr><th>Output</th><th>Description</th></tr></thead>
+      <tbody><tr><td><code>relocations.geoparquet</code></td><td>The cleaned location fixes, each with an <code>is_night</code> flag.</td></tr><tr><td><code>trajectories.geoparquet</code></td><td>The track segments built from those fixes.</td></tr><tr><td>One CSV per group</td><td>The night/day ratio for each subject on each solar day, with columns <code>subject_name</code>, <code>solar_date</code> and <code>night_day_ratio</code>. Days that couldn't be scored are left out.</td></tr><tr><td>One HTML table per group</td><td>As shown on the dashboard.</td></tr><tr><td>Dashboard</td><td>A <strong>Night Day Ratio Table</strong>; with groupers set, the dashboard filter switches between groups.</td></tr></tbody>
+    </table>
+    <p>A ratio of 1 means equal speed by night and day, above 1 faster at night, below 1 faster by day. Each row is one night: a solar day runs from local noon to local noon and is dated by the local midnight in it, so the night of 3&ndash;4 May is listed as 4 May. Days without more than 1 hour of observed data in both daylight and darkness, or with no movement by night or by day, are left out (see the <a href="technical-guide.html#ratio">Technical Guide</a>).</p>
+  </main>
+
+  <footer class="site-footer">
+    <p>Subject night day table &middot; Wildlife Dynamics</p>
+  </footer>
+</body>
+</html>

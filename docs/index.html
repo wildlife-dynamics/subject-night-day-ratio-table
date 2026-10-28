@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subject night day table</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="bar">
+      <a class="brand" href="index.html">Subject night day table</a>
+      <nav>
+        <a href="index.html" class="active">Overview</a>
+        <a href="user-guide.html">User Guide</a>
+        <a href="technical-guide.html">Technical Guide</a>
+        <a href="troubleshooting.html">Troubleshooting</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>Subject night day table</h1>
+    <p class="lede">Tabulates, night by night, how much faster each subject in an EarthRanger subject group moves at night than by day. The night/day ratio compares movement speed in darkness with speed in daylight: 1 is balanced, above 1 the subject moves faster at night, below 1 it moves faster by day.</p>
+
+    <div class="card-grid">
+      <a class="card" href="user-guide.html">
+        <h3>User Guide</h3>
+        <p>Loading the workflow, connecting its data source and filling in its settings.</p>
+      </a>
+      <a class="card" href="technical-guide.html">
+        <h3>Technical Guide</h3>
+        <p>Each step of the workflow, the task packages it uses, the run-form overrides, and how to recompile and test it.</p>
+      </a>
+      <a class="card" href="troubleshooting.html">
+        <h3>Troubleshooting</h3>
+        <p>Common errors while configuring or running the workflow, and how to resolve them.</p>
+      </a>
+    </div>
+
+    <h2>What it does</h2>
+    <table>
+      <thead><tr><th>Step</th><th>What it does</th></tr></thead>
+      <tbody><tr><td><strong>Set Workflow Details</strong></td><td>Name and description shown on the dashboard.</td></tr><tr><td><strong>Connect to EarthRanger</strong></td><td>The EarthRanger site to read from.</td></tr><tr><td><strong>Set Time Range</strong></td><td>The period to analyse.</td></tr><tr><td><strong>Set Groupers</strong></td><td>How the table is split: per subject, per time period or per spatial region. Leave empty for one view.</td></tr><tr><td><strong>Subject Group</strong></td><td>Fetches the location fixes of the subject group picked from the drop-down, for the time range.</td></tr><tr><td><strong>Process Relocations</strong></td><td>Cleans the fixes and drops known bad coordinates (0,0 / 1,1 / 180,90).</td></tr><tr><td><strong>Classify Is Night</strong></td><td>Flags each fix as night when the sun is below the horizon at its location and time.</td></tr><tr><td><strong>Persist Relocations</strong></td><td>Saves the classified fixes as <code>relocations.geoparquet</code>.</td></tr><tr><td><strong>Trajectory Segment Filter</strong></td><td>Joins the fixes into track segments, dropping segments outside the Trajectory Segment Filter limits.</td></tr><tr><td><strong>Persist Trajectories</strong></td><td>Saves the track segments as <code>trajectories.geoparquet</code>.</td></tr><tr><td><strong>Map Trajectory Columns</strong></td><td>Renames the subject and day/night columns (e.g. <code>subject_name</code>, <code>is_night</code>) and drops unused patrol columns.</td></tr><tr><td><strong>Sort Night Day Values</strong></td><td>Orders the segments by their day/night flag.</td></tr><tr><td><strong>Extract Date from Segment Start</strong></td><td>Adds a <code>segment_start_date</code> column: the date each segment starts on (kept in the data; the ratio dates each night itself).</td></tr><tr><td><strong>Split Groups</strong></td><td>One table of segments per group from Set Groupers.</td></tr><tr><td><strong>Summarize Night Day Df</strong></td><td>Computes the night/day ratio for each subject on each solar day (local noon to local noon, so one whole night), dated by that night's local midnight (2 decimal places).</td></tr><tr><td><strong>Exclude null values from night_day_ratio</strong></td><td>Keeps only rows with a ratio above 0, dropping solar days that couldn't be scored.</td></tr><tr><td><strong>Persist Night Day Df</strong></td><td>Saves each group's nightly ratios as a CSV file.</td></tr><tr><td><strong>Map Night Day DF</strong></td><td>Renames the columns to Date, Subject Name and Night Day Ratio for the table.</td></tr><tr><td><strong>Draw Night Day Table</strong></td><td>Draws the nightly ratios as a table, one row per subject per night.</td></tr><tr><td><strong>Persist Night Day Table as HTML</strong></td><td>Saves each table as an HTML file.</td></tr><tr><td><strong>Create Table Widget Single View</strong></td><td>Wraps each table as a <strong>Night Day Ratio Table</strong> widget.</td></tr><tr><td><strong>Merge Widget Views</strong></td><td>Combines the per-group tables into one widget, so the dashboard filter switches between them.</td></tr><tr><td><strong>Gather Dashboard</strong></td><td>Collects the table widget into the dashboard.</td></tr></tbody>
+    </table>
+
+    <h2>What it produces</h2>
+    <table>
+      <thead><tr><th>Output</th><th>Description</th></tr></thead>
+      <tbody><tr><td><code>relocations.geoparquet</code></td><td>The cleaned location fixes, each with an <code>is_night</code> flag.</td></tr><tr><td><code>trajectories.geoparquet</code></td><td>The track segments built from those fixes.</td></tr><tr><td>One CSV per group</td><td>The night/day ratio for each subject on each solar day, with columns <code>subject_name</code>, <code>solar_date</code> and <code>night_day_ratio</code>. Days that couldn't be scored are left out.</td></tr><tr><td>One HTML table per group</td><td>As shown on the dashboard.</td></tr><tr><td>Dashboard</td><td>A <strong>Night Day Ratio Table</strong>; with groupers set, the dashboard filter switches between groups.</td></tr></tbody>
+    </table>
+
+    <h2>Requirements</h2>
+    <ul><li>Access to an <strong>EarthRanger</strong> data source, set up as a connection</li></ul>
+
+    <h2>Get started</h2>
+    <p>New to the workflow? Start with the <a href="user-guide.html">User Guide</a>. Running into an error? Check <a href="troubleshooting.html">Troubleshooting</a> first.</p>
+  </main>
+
+  <footer class="site-footer">
+    <p>Subject night day table &middot; Wildlife Dynamics</p>
+  </footer>
+</body>
+</html>
